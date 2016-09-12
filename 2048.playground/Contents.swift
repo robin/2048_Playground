@@ -48,7 +48,7 @@ struct Style {
     ]
     let tileForgroundColors = [
         #colorLiteral(red: 0.3882352941, green: 0.3647058824, blue: 0.3176470588, alpha: 1),
-        UIColor.white()
+        UIColor.white
     ]
     
     /// tile background color according to the value of the tile
@@ -58,7 +58,7 @@ struct Style {
     
     /// tile text color according to the value of the tile
     func tileForgroundColor(value:Int) -> UIColor {
-        return value > 2 ? tileForgroundColors[1] : tileForgroundColors[0]
+        return tileForgroundColors[value > 2 ? 1 : 0]
     }
 }
 
@@ -83,6 +83,9 @@ class Tile : Equatable {
     var valueText : String {
         return value == 0 ? "" : "\(1<<value)"
     }
+    var valueLength : Int {
+        return valueText.characters.count
+    }
     
     var isEmpty : Bool {
         return value == 0
@@ -95,7 +98,6 @@ class Tile : Equatable {
                 return
             }
             let point = board.pointAt(position: self.position)
-            
             self.topConstraint?.constant = point.y
             self.leftConstraint?.constant = point.x
         }
@@ -107,24 +109,24 @@ class Tile : Equatable {
     
     init(value: Int, position : Position = Position(x: 0, y: 0) ){
         self.position = position
-        view.font = UIFont.boldSystemFont(ofSize: 30)
-        view.textColor = UIColor.white()
         view.textAlignment = .center
         view.layer.cornerRadius = 3
-        view.layer.backgroundColor = UIColor.blue().cgColor
         view.translatesAutoresizingMaskIntoConstraints = false
         self.value = value
         updateView()
     }
     
-    func updateView() {
-        view.text = self.valueText
-        let len = view.text?.characters.count
-        if len > 4 {
-            view.font = UIFont.boldSystemFont(ofSize: 18)
-        } else if len > 3 {
-            view.font = UIFont.boldSystemFont(ofSize: 20)
+    func fontSize(for length: Int) -> CGFloat {
+        if length > 4 {
+            return 18
+        } else if length > 3 {
+            return 20
         }
+        return 30
+    }
+    func updateView() {
+        view.text = valueText
+        view.font = UIFont.boldSystemFont(ofSize: fontSize(for: valueLength))
         view.layer.backgroundColor = style.tileBackgroundColor(value: value)
         view.textColor = style.tileForgroundColor(value: value)
     }
@@ -316,39 +318,34 @@ class Board {
 class GameViewController : UIViewController {
     let board = Board()
     
-    
-    @IBAction func swipeRight(sender:AnyObject?) {
-        board.moveTile(direction: .forward, orientation: .horizon)
-    }
-    
-    @IBAction func swipeLeft(sender:AnyObject?) {
-        board.moveTile(direction: .backward, orientation: .horizon)
-    }
-    
-    @IBAction func swipeUp(sender:AnyObject?) {
-        board.moveTile(direction: .backward, orientation: .vertical)
-    }
-    
-    @IBAction func swipeDown(sender:AnyObject?) {
-        board.moveTile(direction: .forward, orientation: .vertical)
+    @IBAction func swipe(recognizer:UIGestureRecognizer?) {
+        guard let recognizer = recognizer as? UISwipeGestureRecognizer else {
+            return
+        }
+        switch recognizer.direction {
+        case UISwipeGestureRecognizerDirection.right:
+            board.moveTile(direction: .forward, orientation: .horizon)
+        case UISwipeGestureRecognizerDirection.left:
+            board.moveTile(direction: .backward, orientation: .horizon)
+        case UISwipeGestureRecognizerDirection.up:
+            board.moveTile(direction: .backward, orientation: .vertical)
+        case UISwipeGestureRecognizerDirection.down:
+            board.moveTile(direction: .forward, orientation: .vertical)
+        default:
+            break
+        }
     }
     
     override func viewDidLoad() {
         if let view = self.view {
             view.backgroundColor = UIColor(white: 1.0, alpha: 1)
             view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
-            
-            let gesture = UISwipeGestureRecognizer(target: self, action: #selector(swipeRight))
-            view.addGestureRecognizer(gesture)
-            let gestureLeft = UISwipeGestureRecognizer(target: self, action: #selector(swipeLeft))
-            gestureLeft.direction = .left
-            view.addGestureRecognizer(gestureLeft)
-            let gestureUp = UISwipeGestureRecognizer(target: self, action: #selector(swipeUp))
-            gestureUp.direction = .up
-            view.addGestureRecognizer(gestureUp)
-            let gestureDown = UISwipeGestureRecognizer(target: self, action: #selector(swipeDown))
-            gestureDown.direction = .down
-            view.addGestureRecognizer(gestureDown)
+
+            for direction : UISwipeGestureRecognizerDirection in [.left, .right, .up, .down] {
+                let gesture = UISwipeGestureRecognizer(target: self, action: #selector(swipe))
+                gesture.direction = direction
+                view.addGestureRecognizer(gesture)
+            }
             
             board.addTo(view: view)
             board.buildBoard()
