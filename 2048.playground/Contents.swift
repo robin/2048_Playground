@@ -1,5 +1,6 @@
 
 //: 2048 Playground - by Lu Yibin
+//: Rewritten slightly to work with Swift 4.2 - by Eric Mullenax
 
 import UIKit
 import PlaygroundSupport
@@ -323,13 +324,13 @@ class GameViewController : UIViewController {
             return
         }
         switch recognizer.direction {
-        case UISwipeGestureRecognizerDirection.right:
+        case UISwipeGestureRecognizer.Direction.right:
             board.moveTile(direction: .forward, orientation: .horizon)
-        case UISwipeGestureRecognizerDirection.left:
+        case UISwipeGestureRecognizer.Direction.left:
             board.moveTile(direction: .backward, orientation: .horizon)
-        case UISwipeGestureRecognizerDirection.up:
+        case UISwipeGestureRecognizer.Direction.up:
             board.moveTile(direction: .backward, orientation: .vertical)
-        case UISwipeGestureRecognizerDirection.down:
+        case UISwipeGestureRecognizer.Direction.down:
             board.moveTile(direction: .forward, orientation: .vertical)
         default:
             break
@@ -341,7 +342,7 @@ class GameViewController : UIViewController {
             view.backgroundColor = UIColor(white: 1.0, alpha: 1)
             view.autoresizingMask = [.flexibleWidth, .flexibleHeight]
 
-            for direction : UISwipeGestureRecognizerDirection in [.left, .right, .up, .down] {
+            for direction : UISwipeGestureRecognizer.Direction in [.left, .right, .up, .down] {
                 let gesture = UISwipeGestureRecognizer(target: self, action: #selector(swipe))
                 gesture.direction = direction
                 view.addGestureRecognizer(gesture)
